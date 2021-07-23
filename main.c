@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "klogger.h"
+#include "kslog.h"
 #include "online.h"
 #include "offline.h"
 

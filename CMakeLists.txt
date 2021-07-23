@@ -13,8 +13,7 @@ ADD_EXECUTABLE(${TARGET_NAME}
     main.c
     online.c
     offline.c
-
-    ks_entry.c
+    ksentry.c
 
     ${ALL_KSFILE}
 )

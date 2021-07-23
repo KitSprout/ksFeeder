@@ -6,7 +6,7 @@
  *  /_/|_|/_/ \__//___// .__//_/   \___/\_,_/ \__/  
  *                    /_/   github.com/KitSprout    
  * 
- *  @file    klogger.c
+ *  @file    kslog.c
  *  @author  KitSprout
  *  @brief   
  * 
@@ -17,23 +17,31 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "klogger.h"
+#include "kslog.h"
 
 /* Define ----------------------------------------------------------------------------------*/
-#define ENABLE_KSLOG    (0U)
-
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
+
+typedef enum
+{
+    KLOGD = 0,
+    KLOGC,
+    KLOG_BUFFER_NUM
+
+} klog_buffer_index_t;
+
 /* Variables -------------------------------------------------------------------------------*/
 
-static char klogdBuf[KLOG_BUFFER_SIZE];
-static char klogcBuf[KLOG_BUFFER_SIZE];
+const char KSLOG_VERSION[] = KSLOG_VERSION_DEFINE;
+
+static char logbuffer[KLOG_BUFFER_NUM][KLOG_BUFFER_SIZE];
 static uint32_t idx;
 
 /* Prototypes ------------------------------------------------------------------------------*/
 /* Functions -------------------------------------------------------------------------------*/
 
-void kputs( const char *s, uint32_t lens )
+void kputs(const char *s, uint32_t lens)
 {
     while (lens--)
     {
@@ -44,17 +52,17 @@ void kputs( const char *s, uint32_t lens )
 /**
  *  @brief  klogd
  */
-int klogd( const char *fmt, ... )
+int klogd(const char *fmt, ...)
 {
     uint32_t lens = 0;
     va_list aptr;
     va_start(aptr, fmt);
-    lens = vsprintf(klogdBuf, fmt, aptr);
+    lens = vsprintf(logbuffer[KLOGD], fmt, aptr);
     va_end(aptr);
 #if ENABLE_SEGGER_RTT
-    klog_write(klogdBuf, lens);
+    klog_write(logbuffer[KLOGD], lens);
 #else
-    kputs(klogdBuf, lens);
+    kputs(logbuffer[KLOGD], lens);
 #endif
     return lens;
 }
@@ -62,25 +70,25 @@ int klogd( const char *fmt, ... )
 /**
  *  @brief  klogc
  */
-int klogc( const char *fmt, ... )
+int klogc(const char *fmt, ...)
 {
     int lens;
     if (fmt != NULL)
     {
         va_list aptr;
         va_start(aptr, fmt);
-        idx += vsprintf(&klogcBuf[idx], fmt, aptr);
+        idx += vsprintf(&logbuffer[KLOGC][idx], fmt, aptr);
         va_end(aptr);
         lens = idx;
     }
     else
     {
         lens = idx;
-        klogcBuf[idx] = 0;
+        logbuffer[KLOGC][idx] = 0;
 #if ENABLE_SEGGER_RTT
-        klog_write(klogcBuf, lens);
+        klog_write(logbuffer[KLOGC], lens);
 #else
-        kputs(klogcBuf, lens);
+        kputs(logbuffer[KLOGC], lens);
 #endif
         idx = 0;
     }
@@ -88,26 +96,11 @@ int klogc( const char *fmt, ... )
     return lens;
 }
 
-
-void klogmat(char *name, char *format, float *mat, int row, int col)
-{
-	klogd("---- %s ----\n", name);
-	for (int i = 0; i < row; i++)
-	{
-		for (int j = 0; j < col; j++)
-		{
-			klogd(format, mat[i*col+j]);
-		}
-		klogd("\n");
-	}
-}
-
-
 #if ENABLE_SEGGER_RTT
 /**
  *  @brief  klog_init
  */
-int klog_init( const int mode )
+int klog_init(const int mode)
 {
     // default mode: SEGGER_RTT_MODE_NO_BLOCK_SKIP
     return SEGGER_RTT_ConfigUpBuffer(KLOG_RTT_BUFFER_INDEX, NULL, NULL, 0, mode);
@@ -121,7 +114,7 @@ int klog_init( const int mode )
  *  u1,u2,u4: 8,16,32bits unsigned
  *
  */
-int klog_scope_init( uint8_t *buf, const uint32_t lens, const char *format )
+int klog_scope_init(uint8_t *buf, const uint32_t lens, const char *format)
 {
     return SEGGER_RTT_ConfigUpBuffer(KLOG_RTT_JSCOPE_BUFFER_INDEX, format, buf, lens, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
 }
@@ -129,7 +122,7 @@ int klog_scope_init( uint8_t *buf, const uint32_t lens, const char *format )
 /**
  *  @brief  klog_scope_send
  */
-int klog_scope_send( const void *buf, const uint32_t lens )
+int klog_scope_send(const void *buf, const uint32_t lens)
 {
     return SEGGER_RTT_Write(KLOG_RTT_JSCOPE_BUFFER_INDEX, buf, lens);
 }
@@ -139,7 +132,7 @@ int klog_scope_send( const void *buf, const uint32_t lens )
 /**
  *  @brief  fputc
  */
-int fputc( int ch, FILE *f )
+int fputc(int ch, FILE *f)
 {
     char ch8 = ch;
     klog_write(&ch8, 1);
@@ -149,7 +142,7 @@ int fputc( int ch, FILE *f )
 /**
  *  @brief  fgetc
  */
-int fgetc( FILE *f )
+int fgetc(FILE *f)
 {
     return klog_waitkey();
 }

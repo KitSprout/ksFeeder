@@ -15,10 +15,10 @@
 /* Includes --------------------------------------------------------------------------------*/
 #include <stdlib.h>
 #include <string.h>
-#include "klogger.h"
-#include "kscsv.h"
 
-#include "ks_entry.h"
+#include "kslog.h"
+#include "kscsv.h"
+#include "ksentry.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 
@@ -89,6 +89,7 @@ int run_offline(char *filename, int *range)
     }
 
     // feed
+    ksraw_t raw;
     // for (uint32_t i = 0; i < csv.raw.size; i++)
     for (uint32_t i = start; i < end; i++)
     {
@@ -100,8 +101,9 @@ int run_offline(char *filename, int *range)
         float ymb[3] = {csv.raw.mb[0][i], csv.raw.mb[1][i], csv.raw.mb[2][i]};  // mag hardiron
         float ym[3]  = {ymc[0] + ymb[0], ymc[1] + ymb[1], ymc[2] + ymb[2]};     // uncalibrated mag
         float dt     = csv.raw.dt[i] * 1e-9;                                    // dt in second
-        // run
-        ks_entry(ygc, yac, ym, dt);
+        // process
+        // ksupdate(i, &raw);
+        ksentry(i, &raw);
 #endif
 #if 1
         // tag: sn,gx,gy,gz,mx,my,mz,mbx,mby,mbz,dt

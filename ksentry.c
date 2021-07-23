@@ -6,7 +6,7 @@
  *  /_/|_|/_/ \__//___// .__//_/   \___/\_,_/ \__/  
  *                    /_/   github.com/KitSprout    
  * 
- *  @file    ks_entry.c
+ *  @file    ksentry.c
  *  @author  KitSprout
  *  @brief   
  * 
@@ -16,7 +16,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ks_entry.h"
+#include "kslog.h"
+#include "kscsv.h"
+#include "ksentry.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 /* Macro -----------------------------------------------------------------------------------*/
@@ -26,11 +28,23 @@
 /* Functions -------------------------------------------------------------------------------*/
 
 /**
- *  @brief  ks_entry
+ *  @brief  ksentry
  */
-int ks_entry(float *yg, float *ya, float *ym, float dt)
+int ksentry(int index, ksraw_t *raw)
 {
-
+    if (index < 0)
+    {
+        
+    }
+    return 0;
 }
+
+/**
+ *  @brief  updateraw
+ */
+// int ksupdate(int index, ksraw_t *raw, int mode)
+// {
+//     return 0;
+// }
 
 /*************************************** END OF FILE ****************************************/

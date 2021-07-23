@@ -13,17 +13,20 @@
  */
 
 /* Includes --------------------------------------------------------------------------------*/
+#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <direct.h>
 
-#include "klogger.h"
+#include "kslog.h"
 #include "kscsv.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
+
+const char KSCSV_VERSION[] = KSCSV_VERSION_DEFINE;
 
 const char KSCSV_TAG_STRING[KSCSV_IDX_TOTAL][MAX_TAG_STRING_LENGTH] =
 {
