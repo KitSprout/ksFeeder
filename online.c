@@ -6,9 +6,11 @@
  *  /_/|_|/_/ \__//___// .__//_/   \___/\_,_/ \__/  
  *                    /_/   github.com/KitSprout    
  * 
- *  @file    offline.c
+ *  @file    online.c
  *  @author  KitSprout
- *  @brief   
+ *  @brief   mcu firmware:
+ *           https://github.com/Hom-Wang/NRF52833-DK_kTerminal
+ *           commit f4948c44c10bc662ad909b7e2c704aba21a50ab6
  * 
  */
 
@@ -29,8 +31,8 @@
 /* Variables -------------------------------------------------------------------------------*/
 /* Prototypes ------------------------------------------------------------------------------*/
 
-static void ksraw_update(int index, ksraw_t *raw, kscsv_t *csv);
-static int ksfeed_serial(int frequency);
+static void ksraw_update(ksraw_t *praw, kserial_packet_t *pk, int dt);
+static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency);
 
 /* Functions -------------------------------------------------------------------------------*/
 
@@ -39,7 +41,8 @@ static int ksfeed_serial(int frequency);
  */
 int run_online(char *comport, int freq)
 {
-    ksraw_t raw;
+    kscsv_t csv = {0};
+    ksraw_t raw = {0};
 
     s.port = strtoul(&comport[3], NULL, 10);
     // open serial port
@@ -60,7 +63,7 @@ int run_online(char *comport, int freq)
     klogd("serial open ... COM%d\n", s.port);
 
     // run
-    ksfeed_serial(100);
+    ksfeed_serial(&raw, &csv, 100);
 
     // close serial port and free portlist
     serial_close(&s);
@@ -79,13 +82,30 @@ static char getKey(void)
     return ch;
 }
 
-static void ksraw_update(int index, ksraw_t *praw, kscsv_t *pcsv)
+#define GYR_SENSITIVY       (3.14159 / 180.0 / 16.4)    // to rad/s, ±2000dps
+#define ACC_SENSITIVY       (9.81 / 8192.0)             // to m/s^2, ±4g
+#define MAG_SENSITIVY       (1.0 / 6.6)                 // to uT, ±500uT
+static void ksraw_update(ksraw_t *praw, kserial_packet_t *pk, int dt)
 {
+    // [0]sec [1]msc [2]grx [3]gry [4]grz [5]arx [6]ary [7]arz [8]mrx [9]mry [10]mrz [11]t
     praw->raw.index++;
-
+    praw->raw.dt = dt * 1e-3;
+    if (pk->lens > 11)
+    {
+        praw->raw.t = ((int16_t*)pk->data)[11] / 132.48 + 25;
+    }
+    for (int i = 0; i < 3; i++)
+    {
+        praw->raw.gr[i] = ((int16_t*)pk->data)[i + 2] * GYR_SENSITIVY;
+        praw->raw.ar[i] = ((int16_t*)pk->data)[i + 5] * ACC_SENSITIVY;
+        praw->raw.mr[i] = ((int16_t*)pk->data)[i + 8] * MAG_SENSITIVY;
+        praw->raw.g[i] = praw->raw.gr[i];
+        praw->raw.a[i] = praw->raw.ar[i];
+        praw->raw.m[i] = praw->raw.mr[i];
+    }
 }
 
-static int ksfeed_serial(int frequency)
+static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
 {
     int loop = KS_TRUE;
 
@@ -99,10 +119,11 @@ static int ksfeed_serial(int frequency)
         .data = bytes
     };
 
-    uint32_t ts = 0, tn = 0;
+    int ts = 0, tn = 0, dt = 0;
     float packetFreq;
 
-    // set command
+    // TODO: set odr command
+    // TODO: set kserial start command
 
     while (loop)
     {
@@ -111,8 +132,12 @@ static int ksfeed_serial(int frequency)
         {
             ts = tn;
             tn = ((int16_t*)pk.data)[0] * 1000 + ((int16_t*)pk.data)[1];
-            packetFreq = 1000.0 / (tn - ts);
-
+            dt = tn - ts;
+            packetFreq = 1000.0 / dt;
+#if 1
+            ksraw_update(raw, &pk, dt);
+            ksentry(raw->raw.index, &raw->raw);
+#endif
 #if 0
             klogc("[%6d][%3d][%s][%02X:%02X][%4dHz] ", total, count, KS_TYPE_STRING[pk.type], pk.param[0], pk.param[1], (int32_t)packetFreq);
             for (int i = 0; i < pk.lens; i++)
@@ -156,6 +181,9 @@ static int ksfeed_serial(int frequency)
             }
         }
     }
+
+    // TODO: set kserial stop command
+
     return KS_OK;
 }
 

@@ -36,12 +36,13 @@ int ksentry(int index, ksraw_tag_t *raw)
     {
         klogd("[%d] init ... \n", index);
     }
-    klogd("[%d] run ... ", index);
-    klogd("[dt] %.10f [g] %.10f,%.10f,%.10f [a] %.10f,%.10f,%.10f [m] %.10f,%.10f,%.10f\n",
+    klogd("[%5d] ", index);
+    klogd("[dt] %.3f [g] %10.6f,%10.6f,%10.6f [a] %8.4f,%8.4f,%8.4f [m] %7.2f,%7.2f,%7.2f [t] %.3f\n",
         raw->dt,
         raw->g[0], raw->g[1], raw->g[2],
         raw->a[0], raw->a[1], raw->a[2],
-        raw->m[0], raw->m[1], raw->m[2]);
+        raw->m[0], raw->m[1], raw->m[2],
+        raw->t);
     return 1;
 }
 

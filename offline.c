@@ -104,6 +104,7 @@ int run_offline(char *filename, int *range)
 static void ksraw_update(int index, ksraw_t *praw, kscsv_t *pcsv)
 {
     praw->raw.index++;
+    praw->raw.t = 25.0f;
     for (int i = 0; i < pcsv->tagcnt; i++)
     {
         int tag = pcsv->tags[i];
