@@ -21,8 +21,8 @@
 
 /* Define ----------------------------------------------------------------------------------*/
 
-#ifndef DEFAULE_LOGFILE
-#define DEFAULE_LOGFILE     "default.csv"
+#ifndef DEFAULT_ONLINE_UPDATE_RATE
+#define DEFAULT_ONLINE_UPDATE_RATE                      (50)
 #endif
 
 /* Macro -----------------------------------------------------------------------------------*/
@@ -33,7 +33,7 @@ const char KSFEEDER_VERSION[] = KSFEEDER_VERSION_DEFINE;
 
 /* Prototypes ------------------------------------------------------------------------------*/
 
-int run_online(char *comport, int freq);
+int run_online(char *comport, int updaterate);
 int run_offline(char *filename, int *range);
 
 /* Functions -------------------------------------------------------------------------------*/
@@ -101,13 +101,13 @@ int main(int argc, char **argv)
         }
         case ONLINE_MODE:
         {
-            // klogd(">> Online Mode ... %s\n", argv[1]);
-            int freq = 50;
+            klogd(">> Online Mode ... %s\n", argv[1]);
+            int updaterate = DEFAULT_ONLINE_UPDATE_RATE;
             if (argv[1] != NULL)
             {
-                freq = strtoul(argv[2], NULL, 10);
+                updaterate = strtoul(argv[2], NULL, 10);
             }
-            run_online(argv[1], freq);
+            run_online(argv[1], updaterate);
             break;
         }
         case OFFLINE_MODE:

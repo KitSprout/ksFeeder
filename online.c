@@ -26,23 +26,20 @@
 #include "ksfeeder.h"
 
 /* Define ----------------------------------------------------------------------------------*/
-
-#define DEFAULT_FREQ                                    (50)
-
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
 /* Prototypes ------------------------------------------------------------------------------*/
 
 static void ksraw_update(ksraw_t *praw, kserial_packet_t *pk, int dt);
-static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency);
+static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int updaterate);
 
 /* Functions -------------------------------------------------------------------------------*/
 
 /**
  *  @brief  run_online
  */
-int run_online(char *comport, int freq)
+int run_online(char *comport, int updaterate)
 {
     kscsv_t csv = {0};
     ksraw_t raw = {0};
@@ -66,6 +63,8 @@ int run_online(char *comport, int freq)
         return KS_ERROR;
     }
     klogd("serial open ... COM%d", s.port);
+    kscmd_set_mode(0);
+    kserial_delay(100);
     uint32_t id = 0;
     if (kscmd_check_device(&id) != KS_OK)
     {
@@ -75,7 +74,7 @@ int run_online(char *comport, int freq)
     klogd(", id=0x%04X\n", id);
 
     // run
-    ksfeed_serial(&raw, &csv, DEFAULT_FREQ);
+    ksfeed_serial(&raw, &csv, updaterate);
 
     // close serial port and free portlist
     serial_close(&s);
@@ -117,7 +116,7 @@ static void ksraw_update(ksraw_t *praw, kserial_packet_t *pk, int dt)
     }
 }
 
-static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
+static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int updaterate)
 {
     int loop = KS_TRUE;
 
@@ -134,7 +133,7 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
     int ts = 0, tn = 0, dt = 0;
     float packetFreq;
 
-    kscmd_set_updaterate(DEFAULT_FREQ);
+    kscmd_set_updaterate(updaterate);
     kscmd_set_mode(1);
 
     while (loop)
