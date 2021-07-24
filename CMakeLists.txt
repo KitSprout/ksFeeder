@@ -19,9 +19,9 @@ add_executable(${TARGET_NAME}
 )
 
 add_definitions(
-    -DDEFAULE_LOGFILE="LOG_SAMSUNG_SMG973F_20210722_234221.csv"
-    -DLOGOUT_RELATE_PATH="result/"
-    -DLOGOUT_FILE_TAG="_result"
+    -DONLINE_LOGOUT_RELATE_PATH="result/"
+    -DOFFLINE_LOGOUT_RELATE_PATH="result/"
+    -DOFFLINE_LOGOUT_FILE_TAG="_result"
 )
 
 include_directories(

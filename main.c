@@ -119,11 +119,11 @@ int main(int argc, char **argv)
             klogd(">> Online Mode ... %s\n", argv[1]);
             int updaterate = DEFAULT_ONLINE_UPDATE_RATE;
             int savelog = KS_FALSE;
-            if (argv[1] != NULL)
+            if (argv[2] != NULL)
             {
                 updaterate = strtoul(argv[2], NULL, 10);
             }
-            if (argv[2] != NULL)
+            if (argv[3] != NULL)
             {
                 savelog = KS_TRUE;
                 klogd("savelog = KS_TRUE\n");

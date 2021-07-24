@@ -22,20 +22,22 @@
 
 /* Define ----------------------------------------------------------------------------------*/
 
-#ifndef LOGOUT_RELATE_PATH
-#define LOGOUT_RELATE_PATH     "output/"
+#ifndef OFFLINE_LOGOUT_RELATE_PATH
+#define OFFLINE_LOGOUT_RELATE_PATH                      "output/"
 #endif
 
-#ifndef LOGOUT_FILE_TAG
-#define LOGOUT_FILE_TAG         "_output"
+#ifndef OFFLINE_LOGOUT_FILE_TAG
+#define OFFLINE_LOGOUT_FILE_TAG                         "_output"
 #endif
 
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
 
-static char RelatePath[1024] = {LOGOUT_RELATE_PATH};
-static char OutputFileTag[1024] = {LOGOUT_FILE_TAG};
+static char *LOG[] = {"sn","dt","gx","gy","gz","mx","my","mz","mbx","mby","mbz"};
+
+static char RelatePath[1024] = {OFFLINE_LOGOUT_RELATE_PATH};
+static char OutputFileTag[1024] = {OFFLINE_LOGOUT_FILE_TAG};
 
 /* Prototypes ------------------------------------------------------------------------------*/
 
@@ -89,7 +91,6 @@ int run_offline(char *filename, int *range)
     //     strcpy(OutputFileTag, filetag);
     // }
     // create csv
-    char *LOG[] = {"sn","dt","gx","gy","gz","mx","my","mz","mbx","mby","mbz"};
     if (kscsv_create(&csv, RelatePath, OutputFileTag, LOG, sizeof(LOG) >> 2) != KS_OK)
     {
         klogd("create csv failed !!!\n");
