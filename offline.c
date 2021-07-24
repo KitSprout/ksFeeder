@@ -18,7 +18,7 @@
 
 #include "kslog.h"
 #include "kscsv.h"
-#include "ksentry.h"
+#include "ksfeeder.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 
@@ -53,6 +53,8 @@ int run_offline(char *filename, int *range)
     ksraw_t raw = {0};
 
     int start = 0, stop = 0;
+
+    raw.mode = OFFLINE_MODE;
 
     // read csv
     if (kscsv_open(&csv, filename) != KS_OK)
@@ -124,14 +126,13 @@ static void ksraw_update(int index, ksraw_t *praw, kscsv_t *pcsv)
 
 static int ksfeed_csv(ksraw_t *raw, kscsv_t *csv, int start, int stop)
 {
-    // feed
     // for (int i = 0; i < csv.raw.size; i++)
     for (int i = start; i < stop; i++)
     {
 # if 1
         // process
         ksraw_update(i, raw, csv);
-        ksentry(i + 1, &raw->raw);
+        ksfeeder(i + 1, &raw->raw);
 #endif
 #if 1
         // tag: sn,dt,gx,gy,gz,mx,my,mz,mbx,mby,mbz

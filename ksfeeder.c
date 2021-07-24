@@ -17,33 +17,52 @@
 #include <string.h>
 
 #include "kslog.h"
-#include "kscsv.h"
-#include "ksentry.h"
+#include "ksfeeder.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
+
+static int isinited = KS_FALSE;
+
 /* Prototypes ------------------------------------------------------------------------------*/
 /* Functions -------------------------------------------------------------------------------*/
 
 /**
- *  @brief  ksentry
+ *  @brief  ksfeeder
  */
-int ksentry(int index, ksraw_tag_t *raw)
+int ksfeeder(int index, ksraw_tag_t *raw)
 {
-    if (raw->index < 1)
+    if (!isinited)
     {
-        klogd("[%d] init ... \n", index);
+        if (raw->dt > 1)
+        {
+            // klogd("[%6d] error dt \n", index);
+            raw->index--;
+            return KS_FALSE;
+        }
+        isinited = KS_TRUE;
+        klogd("\n[%6d] init ... \n", index);
+
+        // user init process
+        // ...
     }
-    klogd("[%5d] ", index);
+
+#if 1
+    klogd("[%6d] ", index);
     klogd("[dt] %.3f [g] %10.6f,%10.6f,%10.6f [a] %8.4f,%8.4f,%8.4f [m] %7.2f,%7.2f,%7.2f [t] %.3f\n",
         raw->dt,
         raw->g[0], raw->g[1], raw->g[2],
         raw->a[0], raw->a[1], raw->a[2],
         raw->m[0], raw->m[1], raw->m[2],
         raw->t);
-    return 1;
+#endif
+
+    // user run process
+    // ...
+
+    return KS_TRUE;
 }
 
 /*************************************** END OF FILE ****************************************/

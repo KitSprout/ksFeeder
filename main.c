@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "kslog.h"
+#include "ksfeeder.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 
@@ -26,17 +27,10 @@
 
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
-
-typedef enum
-{
-    VERSION_MODE = 0,
-    ONLINE_MODE,
-    OFFLINE_MODE_DEFAULT,
-    OFFLINE_MODE_ASSIGN
-
-} mode_t;
-
 /* Variables -------------------------------------------------------------------------------*/
+
+const char KSFEEDER_VERSION[] = KSFEEDER_VERSION_DEFINE;
+
 /* Prototypes ------------------------------------------------------------------------------*/
 
 int run_online(char *comport, int freq);
@@ -60,7 +54,7 @@ int check_input(char *mode)
         }
         else
         {
-            return OFFLINE_MODE_ASSIGN;
+            return OFFLINE_MODE;
         }
     }
     else
@@ -100,9 +94,9 @@ int main(int argc, char **argv)
     {
         case VERSION_MODE:
         {
-            char ver[1024] = {"v1.0.0"};
+            klogd("\n");
             klogd("  >> version\n");
-            klogd("  %s\n", ver);
+            klogd("  v%s\n", KSFEEDER_VERSION);
             break;
         }
         case ONLINE_MODE:
@@ -116,13 +110,7 @@ int main(int argc, char **argv)
             run_online(argv[1], freq);
             break;
         }
-        case OFFLINE_MODE_DEFAULT:
-        {
-            // klogd(">> Offline Mode ... %s\n", DEFAULE_LOGFILE);
-            run_offline(DEFAULE_LOGFILE, NULL);
-            break;
-        }
-        case OFFLINE_MODE_ASSIGN:
+        case OFFLINE_MODE:
         {
             // klogd(">> Offline Mode ... %s\n", argv[1]);
             int range[2] = {0};

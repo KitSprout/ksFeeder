@@ -6,15 +6,15 @@
  *  /_/|_|/_/ \__//___// .__//_/   \___/\_,_/ \__/  
  *                    /_/   github.com/KitSprout    
  * 
- *  @file    ksentry.h
+ *  @file    ksfeeder.h
  *  @author  KitSprout
  *  @brief   
  * 
  */
 
 /* Define to prevent recursive inclusion ---------------------------------------------------*/
-#ifndef __KSENTRY_H
-#define __KSENTRY_H
+#ifndef __KSFEEDER_H
+#define __KSFEEDER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,10 +22,24 @@ extern "C" {
 
 /* Includes --------------------------------------------------------------------------------*/
 #include <stdint.h>
+#include "kscsv.h"
 
 /* Define ----------------------------------------------------------------------------------*/
+
+#ifndef KSFEEDER_VERSION_DEFINE
+#define KSFEEDER_VERSION_DEFINE                         "1.0.0"
+#endif
+
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
+
+typedef enum
+{
+    VERSION_MODE = 0,
+    ONLINE_MODE,
+    OFFLINE_MODE
+
+} ksraw_mode_t;
 
 typedef struct
 {
@@ -48,13 +62,14 @@ typedef struct
         float mem[KSCSV_IDX_TOTAL];
         ksraw_tag_t raw;
     };
+    int mode;
 
 } ksraw_t;
 
 /* Extern ----------------------------------------------------------------------------------*/
 /* Functions -------------------------------------------------------------------------------*/
 
-int ksentry(int index, ksraw_tag_t *raw);
+int ksfeeder(int index, ksraw_tag_t *raw);
 
 #ifdef __cplusplus
 }

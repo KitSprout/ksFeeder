@@ -23,7 +23,7 @@
 #include "kslog.h"
 #include "kscsv.h"
 #include "kserial.h"
-#include "ksentry.h"
+#include "ksfeeder.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 /* Macro -----------------------------------------------------------------------------------*/
@@ -43,6 +43,8 @@ int run_online(char *comport, int freq)
 {
     kscsv_t csv = {0};
     ksraw_t raw = {0};
+
+    raw.mode = ONLINE_MODE;
 
     s.port = strtoul(&comport[3], NULL, 10);
     // open serial port
@@ -136,7 +138,7 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
             packetFreq = 1000.0 / dt;
 #if 1
             ksraw_update(raw, &pk, dt);
-            ksentry(raw->raw.index, &raw->raw);
+            ksfeeder(raw->raw.index, &raw->raw);
 #endif
 #if 0
             klogc("[%6d][%3d][%s][%02X:%02X][%4dHz] ", total, count, KS_TYPE_STRING[pk.type], pk.param[0], pk.param[1], (int32_t)packetFreq);
