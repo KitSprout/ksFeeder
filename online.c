@@ -47,7 +47,7 @@ int run_online(char *comport, int freq)
     kscsv_t csv = {0};
     ksraw_t raw = {0};
 
-    raw.mode = ONLINE_MODE;
+    raw.raw.mode = ONLINE_MODE;
 
     s.port = strtoul(&comport[3], NULL, 10);
     // open serial port
@@ -111,9 +111,9 @@ static void ksraw_update(ksraw_t *praw, kserial_packet_t *pk, int dt)
         praw->raw.gr[i] = ((int16_t*)pk->data)[i + 2] * GYR_SENSITIVY;
         praw->raw.ar[i] = ((int16_t*)pk->data)[i + 5] * ACC_SENSITIVY;
         praw->raw.mr[i] = ((int16_t*)pk->data)[i + 8] * MAG_SENSITIVY;
-        praw->raw.g[i] = praw->raw.gr[i];
-        praw->raw.a[i] = praw->raw.ar[i];
-        praw->raw.m[i] = praw->raw.mr[i];
+        praw->raw.g[i]  = praw->raw.gr[i];
+        praw->raw.a[i]  = praw->raw.ar[i];
+        praw->raw.m[i]  = praw->raw.mr[i];
     }
 }
 

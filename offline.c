@@ -54,7 +54,7 @@ int run_offline(char *filename, int *range)
 
     int start = 0, stop = 0;
 
-    raw.mode = OFFLINE_MODE;
+    raw.raw.mode = OFFLINE_MODE;
 
     // read csv
     if (kscsv_open(&csv, filename) != KS_OK)

@@ -27,7 +27,7 @@ extern "C" {
 /* Define ----------------------------------------------------------------------------------*/
 
 #ifndef KSFEEDER_VERSION_DEFINE
-#define KSFEEDER_VERSION_DEFINE                         "1.0.0"
+#define KSFEEDER_VERSION_DEFINE                         "1.0.1"
 #endif
 
 /* Macro -----------------------------------------------------------------------------------*/
@@ -53,6 +53,7 @@ typedef struct
     float ag[3], al[3];
     float rv[4], rva[4], rvm[4];
     int index;
+    int mode;
 
 } ksraw_tag_t;
 
@@ -62,7 +63,6 @@ typedef struct
         float mem[KSCSV_IDX_TOTAL];
         ksraw_tag_t raw;
     };
-    int mode;
 
 } ksraw_t;
 
