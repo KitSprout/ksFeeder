@@ -25,7 +25,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 
-#include "kStatus.h"
+#include "kstatus.h"
 
 /* Define ----------------------------------------------------------------------------------*/
 

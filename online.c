@@ -26,6 +26,9 @@
 #include "ksfeeder.h"
 
 /* Define ----------------------------------------------------------------------------------*/
+
+#define DEFAULT_FREQ                                    (50)
+
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
@@ -62,10 +65,17 @@ int run_online(char *comport, int freq)
     {
         return KS_ERROR;
     }
-    klogd("serial open ... COM%d\n", s.port);
+    klogd("serial open ... COM%d", s.port);
+    uint32_t id = 0;
+    if (kscmd_check_device(&id) != KS_OK)
+    {
+        klogd(" ... device not found\n");
+        return KS_ERROR;
+    }
+    klogd(", id=0x%04X\n", id);
 
     // run
-    ksfeed_serial(&raw, &csv, 100);
+    ksfeed_serial(&raw, &csv, DEFAULT_FREQ);
 
     // close serial port and free portlist
     serial_close(&s);
@@ -124,8 +134,8 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
     int ts = 0, tn = 0, dt = 0;
     float packetFreq;
 
-    // TODO: set odr command
-    // TODO: set kserial start command
+    kscmd_set_updaterate(DEFAULT_FREQ);
+    kscmd_set_mode(1);
 
     while (loop)
     {
@@ -184,7 +194,7 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
         }
     }
 
-    // TODO: set kserial stop command
+    kscmd_set_mode(0);
 
     return KS_OK;
 }

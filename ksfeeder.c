@@ -50,7 +50,7 @@ int ksfeeder(int index, ksraw_tag_t *raw)
     }
 
 #if 1
-    klogd("[%6d] ", index);
+    klogd("[%6d][%.0fHz] ", index, 1.0 / raw->dt);
     klogd("[dt] %.3f [g] %10.6f,%10.6f,%10.6f [a] %8.4f,%8.4f,%8.4f [m] %7.2f,%7.2f,%7.2f [t] %.3f\n",
         raw->dt,
         raw->g[0], raw->g[1], raw->g[2],
