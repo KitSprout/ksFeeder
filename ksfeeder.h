@@ -27,7 +27,7 @@ extern "C" {
 /* Define ----------------------------------------------------------------------------------*/
 
 #ifndef KSFEEDER_VERSION_DEFINE
-#define KSFEEDER_VERSION_DEFINE                         "1.0.1"
+#define KSFEEDER_VERSION_DEFINE                         "1.0.2"
 #endif
 
 /* Macro -----------------------------------------------------------------------------------*/

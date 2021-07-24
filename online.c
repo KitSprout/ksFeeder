@@ -39,7 +39,7 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int updaterate);
 /**
  *  @brief  run_online
  */
-int run_online(char *comport, int updaterate)
+int run_online(char *comport, int updaterate, int save)
 {
     kscsv_t csv = {0};
     ksraw_t raw = {0};
