@@ -30,21 +30,19 @@
 /**
  *  @brief  ksentry
  */
-int ksentry(int index, ksraw_t *raw)
+int ksentry(int index, ksraw_tag_t *raw)
 {
-    if (index < 0)
+    if (raw->index < 1)
     {
-        
+        klogd("[%d] init ... \n", index);
     }
-    return 0;
+    klogd("[%d] run ... ", index);
+    klogd("[dt] %.10f [g] %.10f,%.10f,%.10f [a] %.10f,%.10f,%.10f [m] %.10f,%.10f,%.10f\n",
+        raw->dt,
+        raw->g[0], raw->g[1], raw->g[2],
+        raw->a[0], raw->a[1], raw->a[2],
+        raw->m[0], raw->m[1], raw->m[2]);
+    return 1;
 }
-
-/**
- *  @brief  updateraw
- */
-// int ksupdate(int index, ksraw_t *raw, int mode)
-// {
-//     return 0;
-// }
 
 /*************************************** END OF FILE ****************************************/

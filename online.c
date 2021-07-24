@@ -25,6 +25,9 @@
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
 /* Prototypes ------------------------------------------------------------------------------*/
+
+static void ksrawupdate(int index, ksraw_t *raw, kscsv_t *csv);
+
 /* Functions -------------------------------------------------------------------------------*/
 
 /**
@@ -32,6 +35,8 @@
  */
 int run_online(char *comport, int freq)
 {
+    ksraw_t raw;
+
     s.port = strtoul(&comport[3], NULL, 10);
     // open serial port
     if (s.port == 0)
@@ -59,6 +64,12 @@ int run_online(char *comport, int freq)
     serial_free_portlist(&s.portlist);
 
     return 0;
+}
+
+static void ksrawupdate(int index, ksraw_t *praw, kscsv_t *pcsv)
+{
+    praw->raw.index++;
+
 }
 
 /*************************************** END OF FILE ****************************************/
@@ -126,7 +137,6 @@ int run_online(char *comport, int freq)
 //             }
 //             case 19:    // ctrl + S
 //             {
-//                 // TODO: save log
 //                 klogd("\n  >> save file\n");
 //                 kserial_delay(100);
 //                 break;

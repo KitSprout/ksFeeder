@@ -29,23 +29,32 @@ extern "C" {
 
 typedef struct
 {
-    double sn;
-    double ts;
-    double dt;
-    double g[3], gr[3], gb[3];
-    double a[3], ar[3], ab[3];
-    double m[3], mr[3], mb[3];
-    double p, t;
-    double ag[3], al[3];
-    double rv[4], rva[4], rvm[4];
+    float sn;
+    float ts;
+    float dt;
+    float g[3], gr[3], gb[3];
+    float a[3], ar[3], ab[3];
+    float m[3], mr[3], mb[3];
+    float p, t;
+    float ag[3], al[3];
+    float rv[4], rva[4], rvm[4];
+    int index;
+
+} ksraw_tag_t;
+
+typedef struct
+{
+    union {
+        float mem[KSCSV_IDX_TOTAL];
+        ksraw_tag_t raw;
+    };
 
 } ksraw_t;
 
 /* Extern ----------------------------------------------------------------------------------*/
 /* Functions -------------------------------------------------------------------------------*/
 
-int ksentry(int index, ksraw_t *raw);
-// int ksupdate(int index, ksraw_t *raw);
+int ksentry(int index, ksraw_tag_t *raw);
 
 #ifdef __cplusplus
 }

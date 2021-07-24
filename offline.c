@@ -34,10 +34,13 @@
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
 
-char RelatePath[1024] = {LOGOUT_RELATE_PATH};
-char OutputFileTag[1024] = {LOGOUT_FILE_TAG};
+static char RelatePath[1024] = {LOGOUT_RELATE_PATH};
+static char OutputFileTag[1024] = {LOGOUT_FILE_TAG};
 
 /* Prototypes ------------------------------------------------------------------------------*/
+
+static void ksrawupdate(int index, ksraw_t *raw, kscsv_t *csv);
+
 /* Functions -------------------------------------------------------------------------------*/
 
 /**
@@ -46,6 +49,8 @@ char OutputFileTag[1024] = {LOGOUT_FILE_TAG};
 int run_offline(char *filename, int *range)
 {
     kscsv_t csv = {0};
+    ksraw_t raw = {0};
+
     int start = 0, end = 0;
 
     // read csv
@@ -81,7 +86,7 @@ int run_offline(char *filename, int *range)
     //     strcpy(OutputFileTag, filetag);
     // }
     // create csv
-    char *LOG[] = {"gx","gy","gz","mx","my","mz","dt","mbx","mby","mbz"};
+    char *LOG[] = {"sn","dt","gx","gy","gz","mx","my","mz","mbx","mby","mbz"};
     if (kscsv_create(&csv, RelatePath, OutputFileTag, LOG, sizeof(LOG) >> 2) != KS_OK)
     {
         klogd("create csv failed !!!\n");
@@ -89,35 +94,46 @@ int run_offline(char *filename, int *range)
     }
 
     // feed
-    ksraw_t raw;
     // for (uint32_t i = 0; i < csv.raw.size; i++)
     for (uint32_t i = start; i < end; i++)
     {
 # if 1
-        float sn     = csv.raw.sn[i];
-        float ygc[3] = {csv.raw.g[0][i], csv.raw.g[1][i], csv.raw.g[2][i]};     // calibrated gyr
-        float yac[3] = {csv.raw.a[0][i], csv.raw.a[1][i], csv.raw.a[2][i]};     // calibrated acc
-        float ymc[3] = {csv.raw.m[0][i], csv.raw.m[1][i], csv.raw.m[2][i]};     // calibrated mag
-        float ymb[3] = {csv.raw.mb[0][i], csv.raw.mb[1][i], csv.raw.mb[2][i]};  // mag hardiron
-        float ym[3]  = {ymc[0] + ymb[0], ymc[1] + ymb[1], ymc[2] + ymb[2]};     // uncalibrated mag
-        float dt     = csv.raw.dt[i] * 1e-9;                                    // dt in second
         // process
-        // ksupdate(i, &raw);
-        ksentry(i, &raw);
+        ksrawupdate(i, &raw, &csv);
+        ksentry(i + 1, &raw.raw);
 #endif
 #if 1
-        // tag: sn,gx,gy,gz,mx,my,mz,mbx,mby,mbz,dt
-        kscsv_write(&csv, "%.0f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f",
-            sn,
-            ygc[0], ygc[1], ygc[2],
-            ymc[0], ymc[1], ymc[2],
-            ymb[0], ymb[1], ymb[2],
-            dt);
+        // tag: sn,dt,gx,gy,gz,mx,my,mz,mbx,mby,mbz
+        kscsv_write(&csv, "%.0f,%.0f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f",
+            csv.raw.sn[i], csv.raw.dt[i],
+            csv.raw.g[0][i], csv.raw.g[1][i], csv.raw.g[2][i],
+            csv.raw.m[0][i], csv.raw.m[1][i], csv.raw.m[2][i],
+            csv.raw.mb[0][i], csv.raw.mb[1][i], csv.raw.mb[2][i]);
 #endif
     }
 
     // close csv
     return kscsv_close(&csv);
+}
+
+static void ksrawupdate(int index, ksraw_t *praw, kscsv_t *pcsv)
+{
+    praw->raw.index++;
+    for (int i = 0; i < pcsv->tagcnt; i++)
+    {
+        int tag = pcsv->tags[i];
+        if ((tag > KSCSV_IDX_TS) && (tag < KSCSV_IDX_UNKNOWN))
+        {
+            if (tag != KSCSV_IDX_DT)
+            {
+                praw->mem[tag] = (float)((double*)pcsv->mem[tag])[index];
+            }
+            else
+            {
+                praw->mem[tag] = (float)((double*)pcsv->mem[tag])[index] * 1e-9;
+            }
+        }
+    }
 }
 
 /*************************************** END OF FILE ****************************************/
