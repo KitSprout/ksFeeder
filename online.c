@@ -14,10 +14,13 @@
 
 /* Includes --------------------------------------------------------------------------------*/
 #include <stdlib.h>
+#include <conio.h>
+
 #include "serial.h"
 
 #include "kslog.h"
 #include "kscsv.h"
+#include "kserial.h"
 #include "ksentry.h"
 
 /* Define ----------------------------------------------------------------------------------*/
@@ -26,7 +29,8 @@
 /* Variables -------------------------------------------------------------------------------*/
 /* Prototypes ------------------------------------------------------------------------------*/
 
-static void ksrawupdate(int index, ksraw_t *raw, kscsv_t *csv);
+static void ksraw_update(int index, ksraw_t *raw, kscsv_t *csv);
+static int ksfeed_serial(int frequency);
 
 /* Functions -------------------------------------------------------------------------------*/
 
@@ -56,8 +60,7 @@ int run_online(char *comport, int freq)
     klogd("serial open ... COM%d\n", s.port);
 
     // run
-    // yg, ya, ym, dt, p, t
-    // ksentry();
+    ksfeed_serial(100);
 
     // close serial port and free portlist
     serial_close(&s);
@@ -66,82 +69,94 @@ int run_online(char *comport, int freq)
     return 0;
 }
 
-static void ksrawupdate(int index, ksraw_t *praw, kscsv_t *pcsv)
+static char getKey(void)
+{
+    char ch = 0;
+    if (_kbhit())
+    {
+        ch = _getch();
+    }
+    return ch;
+}
+
+static void ksraw_update(int index, ksraw_t *praw, kscsv_t *pcsv)
 {
     praw->raw.index++;
 
 }
 
+static int ksfeed_serial(int frequency)
+{
+    int loop = KS_TRUE;
+
+    int16_t bytes[KSERIAL_MAX_PACKET_LENS >> 1];
+    uint32_t index = 0, count = 0, total = 0;
+    kserial_packet_t pk = {
+        .param = {0},
+        .type = 0,
+        .lens = 0,
+        .nbyte = 0,
+        .data = bytes
+    };
+
+    uint32_t ts = 0, tn = 0;
+    float packetFreq;
+
+    // set command
+
+    while (loop)
+    {
+        kserial_read_continuous(&pk, &index, &count, &total);
+        if (count != 0)
+        {
+            ts = tn;
+            tn = ((int16_t*)pk.data)[0] * 1000 + ((int16_t*)pk.data)[1];
+            packetFreq = 1000.0 / (tn - ts);
+
+#if 0
+            klogc("[%6d][%3d][%s][%02X:%02X][%4dHz] ", total, count, KS_TYPE_STRING[pk.type], pk.param[0], pk.param[1], (int32_t)packetFreq);
+            for (int i = 0; i < pk.lens; i++)
+            {
+                switch (pk.type)
+                {
+                    case KS_I8:     klogc(KS_TYPE_FORMATE[pk.type], ((int8_t*)pk.data)[i]);    break;
+                    case KS_U8:     klogc(KS_TYPE_FORMATE[pk.type], ((uint8_t*)pk.data)[i]);   break;
+                    case KS_I16:    klogc(KS_TYPE_FORMATE[pk.type], ((int16_t*)pk.data)[i]);   break;
+                    case KS_U16:    klogc(KS_TYPE_FORMATE[pk.type], ((uint16_t*)pk.data)[i]);  break;
+                    case KS_I32:    klogc(KS_TYPE_FORMATE[pk.type], ((int32_t*)pk.data)[i]);   break;
+                    case KS_U32:    klogc(KS_TYPE_FORMATE[pk.type], ((uint32_t*)pk.data)[i]);  break;
+                    case KS_I64:    klogc(KS_TYPE_FORMATE[pk.type], ((int64_t*)pk.data)[i]);   break;
+                    case KS_U64:    klogc(KS_TYPE_FORMATE[pk.type], ((uint64_t*)pk.data)[i]);  break;
+                    case KS_F32:    klogc(KS_TYPE_FORMATE[pk.type], ((float*)pk.data)[i]);     break;
+                    case KS_F64:    klogc(KS_TYPE_FORMATE[pk.type], ((double*)pk.data)[i]);    break;
+                }
+                if (i != (pk.lens - 1))
+                {
+                    klogc(",");
+                }
+            }
+            klogc("\n");
+            klogc(NULL);
+#endif
+
+        }
+        switch (getKey())
+        {
+            case 17:    // ctrl + q
+            {
+                klogd("\n  >> exit\n");
+                loop = KS_FALSE;
+                break;
+            }
+            case 19:    // ctrl + S
+            {
+                klogd("\n  >> save file\n");
+                kserial_delay(100);
+                break;
+            }
+        }
+    }
+    return KS_OK;
+}
+
 /*************************************** END OF FILE ****************************************/
-
-// uint32_t kCommand_UartKSerialRecv( const char **argv )
-// {
-//     char logbuf[1024] = {0};
-
-//     uint32_t loop = KS_TRUE;
-
-//     int16_t bytes[KSERIAL_MAX_PACKET_LENS >> 1];
-//     uint32_t index = 0, count = 0, total = 0;
-//     kserial_packet_t pk = {
-//         .param = {0},
-//         .type = 0,
-//         .lens = 0,
-//         .nbyte = 0,
-//         .data = bytes
-//     };
-
-//     uint32_t ts = 0, tn = 0;
-//     float packetFreq;
-
-//     while (loop)
-//     {
-//         kserial_read_continuous(&pk, &index, &count, &total);
-//         if (count != 0)
-//         {
-//             ts = tn;
-//             tn = ((int16_t*)pk.data)[0]*1000 + ((int16_t*)pk.data)[1];
-//             packetFreq = 1000.0 / (tn - ts);
-
-//             uint32_t lens;
-//             lens = sprintf(logbuf, "[%6d][%3d][%s][%02X:%02X][%4dHz] ", total, count, KS_TYPE_STRING[pk.type], pk.param[0], pk.param[1], (int32_t)packetFreq);
-//             for (uint32_t i = 0; i < pk.lens; i++)
-//             {
-//                 switch (pk.type)
-//                 {
-//                     case KS_I8:     lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((int8_t*)pk.data)[i]);    break;
-//                     case KS_U8:     lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((uint8_t*)pk.data)[i]);   break;
-//                     case KS_I16:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((int16_t*)pk.data)[i]);   break;
-//                     case KS_U16:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((uint16_t*)pk.data)[i]);  break;
-//                     case KS_I32:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((int32_t*)pk.data)[i]);   break;
-//                     case KS_U32:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((uint32_t*)pk.data)[i]);  break;
-//                     case KS_I64:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((int64_t*)pk.data)[i]);   break;
-//                     case KS_U64:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((uint64_t*)pk.data)[i]);  break;
-//                     case KS_F32:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((float*)pk.data)[i]);     break;
-//                     case KS_F64:    lens += sprintf(&logbuf[lens], KS_TYPE_FORMATE[pk.type], ((double*)pk.data)[i]);    break;
-//                 }
-//                 if (i != (pk.lens - 1))
-//                 {
-//                     logbuf[lens++] = ',';
-//                 }
-//             }
-//             logbuf[lens++] = 0;
-//             puts(logbuf);
-//         }
-//         switch (getKey())
-//         {
-//             case 17:    // ctrl + q
-//             {
-//                 klogd("\n  >> exit\n");
-//                 loop = KS_FALSE;
-//                 break;
-//             }
-//             case 19:    // ctrl + S
-//             {
-//                 klogd("\n  >> save file\n");
-//                 kserial_delay(100);
-//                 break;
-//             }
-//         }
-//     }
-//     return KS_OK;
-// }

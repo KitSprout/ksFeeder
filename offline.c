@@ -39,7 +39,8 @@ static char OutputFileTag[1024] = {LOGOUT_FILE_TAG};
 
 /* Prototypes ------------------------------------------------------------------------------*/
 
-static void ksrawupdate(int index, ksraw_t *raw, kscsv_t *csv);
+static void ksraw_update(int index, ksraw_t *raw, kscsv_t *csv);
+static int ksfeed_csv(ksraw_t *raw, kscsv_t *csv, int start, int stop);
 
 /* Functions -------------------------------------------------------------------------------*/
 
@@ -51,7 +52,7 @@ int run_offline(char *filename, int *range)
     kscsv_t csv = {0};
     ksraw_t raw = {0};
 
-    int start = 0, end = 0;
+    int start = 0, stop = 0;
 
     // read csv
     if (kscsv_open(&csv, filename) != KS_OK)
@@ -67,15 +68,15 @@ int run_offline(char *filename, int *range)
     if (range != NULL)
     {
         start = range[0] - 1;
-        end = range[1];
-        if (end > csv.raw.size)
+        stop = range[1];
+        if (stop > csv.raw.size)
         {
-            end = csv.raw.size;
+            stop = csv.raw.size;
         }
     }
     else
     {
-        end = csv.raw.size;
+        stop = csv.raw.size;
     }
     // if (relatepath != NULL)
     // {
@@ -94,29 +95,13 @@ int run_offline(char *filename, int *range)
     }
 
     // feed
-    // for (uint32_t i = 0; i < csv.raw.size; i++)
-    for (uint32_t i = start; i < end; i++)
-    {
-# if 1
-        // process
-        ksrawupdate(i, &raw, &csv);
-        ksentry(i + 1, &raw.raw);
-#endif
-#if 1
-        // tag: sn,dt,gx,gy,gz,mx,my,mz,mbx,mby,mbz
-        kscsv_write(&csv, "%.0f,%.0f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f",
-            csv.raw.sn[i], csv.raw.dt[i],
-            csv.raw.g[0][i], csv.raw.g[1][i], csv.raw.g[2][i],
-            csv.raw.m[0][i], csv.raw.m[1][i], csv.raw.m[2][i],
-            csv.raw.mb[0][i], csv.raw.mb[1][i], csv.raw.mb[2][i]);
-#endif
-    }
+    ksfeed_csv(&raw, &csv, start, stop);
 
     // close csv
     return kscsv_close(&csv);
 }
 
-static void ksrawupdate(int index, ksraw_t *praw, kscsv_t *pcsv)
+static void ksraw_update(int index, ksraw_t *praw, kscsv_t *pcsv)
 {
     praw->raw.index++;
     for (int i = 0; i < pcsv->tagcnt; i++)
@@ -134,6 +119,29 @@ static void ksrawupdate(int index, ksraw_t *praw, kscsv_t *pcsv)
             }
         }
     }
+}
+
+static int ksfeed_csv(ksraw_t *raw, kscsv_t *csv, int start, int stop)
+{
+    // feed
+    // for (int i = 0; i < csv.raw.size; i++)
+    for (int i = start; i < stop; i++)
+    {
+# if 1
+        // process
+        ksraw_update(i, raw, csv);
+        ksentry(i + 1, &raw->raw);
+#endif
+#if 1
+        // tag: sn,dt,gx,gy,gz,mx,my,mz,mbx,mby,mbz
+        kscsv_write(csv, "%.0f,%.0f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f",
+            csv->raw.sn[i], csv->raw.dt[i],
+            csv->raw.g[0][i], csv->raw.g[1][i], csv->raw.g[2][i],
+            csv->raw.m[0][i], csv->raw.m[1][i], csv->raw.m[2][i],
+            csv->raw.mb[0][i], csv->raw.mb[1][i], csv->raw.mb[2][i]);
+#endif
+    }
+    return KS_OK;
 }
 
 /*************************************** END OF FILE ****************************************/
