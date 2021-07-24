@@ -58,7 +58,6 @@ int ksfeeder(int index, ksraw_tag_t *raw)
         raw->m[0], raw->m[1], raw->m[2],
         raw->t);
 #endif
-
     // user run process
     // ...
 

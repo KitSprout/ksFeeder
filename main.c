@@ -21,8 +21,8 @@
 
 /* Define ----------------------------------------------------------------------------------*/
 
-#ifndef DEFAULE_LOGFILE
-#define DEFAULE_LOGFILE     "default.csv"
+#ifndef DEFAULT_ONLINE_UPDATE_RATE
+#define DEFAULT_ONLINE_UPDATE_RATE                      (50)
 #endif
 
 /* Macro -----------------------------------------------------------------------------------*/
@@ -33,7 +33,7 @@ const char KSFEEDER_VERSION[] = KSFEEDER_VERSION_DEFINE;
 
 /* Prototypes ------------------------------------------------------------------------------*/
 
-int run_online(char *comport, int freq);
+int run_online(char *comport, int updaterate, int save);
 int run_offline(char *filename, int *range);
 
 /* Functions -------------------------------------------------------------------------------*/
@@ -68,6 +68,11 @@ int check_input(char *mode)
  */
 int getrange(const char *string, int *range)
 {
+    if (string == NULL)
+    {
+        return KS_ERROR;
+    }
+
     int idx = 0;
     for (int i = 0; i < strlen(string); i++)
     {
@@ -81,6 +86,16 @@ int getrange(const char *string, int *range)
     buf[idx] = '\0';
     range[0] = strtoul(buf, NULL, 10);
     range[1] = strtoul(&buf[idx+1], NULL, 10);
+    if (range[0] <= 0)
+    {
+        range[0] = 1;
+    }
+    if (range[1] < range[0])
+    {
+        range[0] = 1;
+        range[1] = 1;
+    }
+    return KS_OK;
 }
 
 /**
@@ -101,21 +116,33 @@ int main(int argc, char **argv)
         }
         case ONLINE_MODE:
         {
-            // klogd(">> Online Mode ... %s\n", argv[1]);
-            int freq = 50;
-            if (argv[1] != NULL)
+            klogd(">> Online Mode ... %s\n", argv[1]);
+            int updaterate = DEFAULT_ONLINE_UPDATE_RATE;
+            int savelog = KS_FALSE;
+            if (argv[2] != NULL)
             {
-                freq = strtoul(argv[2], NULL, 10);
+                updaterate = strtoul(argv[2], NULL, 10);
             }
-            run_online(argv[1], freq);
+            if (argv[3] != NULL)
+            {
+                savelog = KS_TRUE;
+                klogd("savelog = KS_TRUE\n");
+            }
+            run_online(argv[1], updaterate, savelog);
             break;
         }
         case OFFLINE_MODE:
         {
             // klogd(">> Offline Mode ... %s\n", argv[1]);
             int range[2] = {0};
-            getrange(argv[2], range);
-            run_offline(argv[1], range);
+            if (getrange(argv[2], range) != KS_OK)
+            {
+                run_offline(argv[1], NULL);
+            }
+            else
+            {
+                run_offline(argv[1], range);
+            }
             break;
         }
     }

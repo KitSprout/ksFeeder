@@ -17,6 +17,7 @@
 /* Includes --------------------------------------------------------------------------------*/
 #include <stdlib.h>
 #include <conio.h>
+#include <time.h>
 
 #include "serial.h"
 
@@ -27,27 +28,33 @@
 
 /* Define ----------------------------------------------------------------------------------*/
 
-#define DEFAULT_FREQ                                    (50)
+#ifndef ONLINE_LOGOUT_RELATE_PATH
+#define ONLINE_LOGOUT_RELATE_PATH                       "log/"
+#endif
 
 /* Macro -----------------------------------------------------------------------------------*/
 /* Typedef ---------------------------------------------------------------------------------*/
 /* Variables -------------------------------------------------------------------------------*/
+
+static char *LOG[] = {"sn","dt","gx","gy","gz","ax","ay","az","mx","my","mz"};
+
 /* Prototypes ------------------------------------------------------------------------------*/
 
+static int datetimestring(char *datestring);
 static void ksraw_update(ksraw_t *praw, kserial_packet_t *pk, int dt);
-static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency);
+static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int updaterate, int save);
 
 /* Functions -------------------------------------------------------------------------------*/
 
 /**
  *  @brief  run_online
  */
-int run_online(char *comport, int freq)
+int run_online(char *comport, int updaterate, int save)
 {
     kscsv_t csv = {0};
     ksraw_t raw = {0};
 
-    raw.mode = ONLINE_MODE;
+    raw.raw.mode = ONLINE_MODE;
 
     s.port = strtoul(&comport[3], NULL, 10);
     // open serial port
@@ -66,6 +73,8 @@ int run_online(char *comport, int freq)
         return KS_ERROR;
     }
     klogd("serial open ... COM%d", s.port);
+    kscmd_set_mode(0);
+    kserial_delay(100);
     uint32_t id = 0;
     if (kscmd_check_device(&id) != KS_OK)
     {
@@ -74,8 +83,22 @@ int run_online(char *comport, int freq)
     }
     klogd(", id=0x%04X\n", id);
 
+    if (save == KS_TRUE)
+    {
+        // create csv
+        char filename[256] = {0};
+        char datestring[256] = {0};
+        datetimestring(datestring);
+        sprintf(filename, "%sLOG_SERIAL_%s.csv", ONLINE_LOGOUT_RELATE_PATH, datestring);
+        if (kscsv_create(&csv, filename, NULL, LOG, sizeof(LOG) >> 2) != KS_OK)
+        {
+            klogd("create csv failed !!!\n");
+            return -1;
+        }
+    }
+
     // run
-    ksfeed_serial(&raw, &csv, DEFAULT_FREQ);
+    ksfeed_serial(&raw, &csv, updaterate, save);
 
     // close serial port and free portlist
     serial_close(&s);
@@ -84,7 +107,24 @@ int run_online(char *comport, int freq)
     return 0;
 }
 
-static char getKey(void)
+static int datetimestring(char *datestring)
+{
+    time_t t = time(NULL);
+    struct tm ts = *localtime(&t);
+    int lens;
+    int datetime[6] = {0};
+    datetime[0] = ts.tm_year + 1900;
+    datetime[1] = ts.tm_mon + 1;
+    datetime[2] = ts.tm_mday;
+    datetime[3] = ts.tm_hour;
+    datetime[4] = ts.tm_min;
+    datetime[5] = ts.tm_sec;
+    lens = sprintf(datestring, "%04d%02d%02d_%02d%02d%02d",
+        datetime[0], datetime[1], datetime[2], datetime[3], datetime[4], datetime[5]);
+    return lens;
+}
+
+static char getkey(void)
 {
     char ch = 0;
     if (_kbhit())
@@ -111,13 +151,13 @@ static void ksraw_update(ksraw_t *praw, kserial_packet_t *pk, int dt)
         praw->raw.gr[i] = ((int16_t*)pk->data)[i + 2] * GYR_SENSITIVY;
         praw->raw.ar[i] = ((int16_t*)pk->data)[i + 5] * ACC_SENSITIVY;
         praw->raw.mr[i] = ((int16_t*)pk->data)[i + 8] * MAG_SENSITIVY;
-        praw->raw.g[i] = praw->raw.gr[i];
-        praw->raw.a[i] = praw->raw.ar[i];
-        praw->raw.m[i] = praw->raw.mr[i];
+        praw->raw.g[i]  = praw->raw.gr[i];
+        praw->raw.a[i]  = praw->raw.ar[i];
+        praw->raw.m[i]  = praw->raw.mr[i];
     }
 }
 
-static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
+static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int updaterate, int save)
 {
     int loop = KS_TRUE;
 
@@ -134,7 +174,7 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
     int ts = 0, tn = 0, dt = 0;
     float packetFreq;
 
-    kscmd_set_updaterate(DEFAULT_FREQ);
+    kscmd_set_updaterate(updaterate);
     kscmd_set_mode(1);
 
     while (loop)
@@ -149,6 +189,17 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
 #if 1
             ksraw_update(raw, &pk, dt);
             ksfeeder(raw->raw.index, &raw->raw);
+#endif
+#if 1
+            if ((raw->raw.index > 0) && (save == KS_TRUE))
+            {
+                // tag: sn,dt,gx,gy,gz,ax,ay,az,mx,my,mz
+                kscsv_write(csv, "%d,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f",
+                    raw->raw.index, raw->raw.dt,
+                    raw->raw.g[0], raw->raw.g[1], raw->raw.g[2],
+                    raw->raw.a[0], raw->raw.a[1], raw->raw.a[2],
+                    raw->raw.m[0], raw->raw.m[1], raw->raw.m[2]);
+            }
 #endif
 #if 0
             klogc("[%6d][%3d][%s][%02X:%02X][%4dHz] ", total, count, KS_TYPE_STRING[pk.type], pk.param[0], pk.param[1], (int32_t)packetFreq);
@@ -175,9 +226,8 @@ static int ksfeed_serial(ksraw_t *raw, kscsv_t *csv, int frequency)
             klogc("\n");
             klogc(NULL);
 #endif
-
         }
-        switch (getKey())
+        switch (getkey())
         {
             case 17:    // ctrl + q
             {

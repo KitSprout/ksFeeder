@@ -32,7 +32,7 @@ extern "C" {
 /* Define ----------------------------------------------------------------------------------*/
 
 #ifndef KSERIAL_VERSION_DEFINE
-#define KSERIAL_VERSION_DEFINE                          "1.1.0"
+#define KSERIAL_VERSION_DEFINE                          "1.1.2"
 #endif
 
 /* Macro -----------------------------------------------------------------------------------*/
